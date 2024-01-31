@@ -14,11 +14,21 @@ router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-router.get('/upload', upload.single('file'), (req, res) => {
+router.post('/upload', isLoggedIn, upload.single('file'), async function (req, res) {
   if (!req.file) {
-    return res.status(404).send('No files were uploaded.');
+    return res.status(400).send('No files were uploaded.');
   }
-  res.send('file uploaded successfully!');
+  const user = await userModel.findOne({
+    username: req.session.passport.user
+  })
+  let postdata = await postModel.create({
+    image: req.file.filename,
+    imageText: req.body.filecaption,
+    user: user._id
+  })
+  user.posts.push(postdata._id);
+  await user.save();
+  res.redirect("/profile")
 });
 
 
@@ -28,10 +38,10 @@ router.get('/feed', function (req, res, next) {
 router.get('/login', function (req, res, next) {
   res.render('login', { error: req.flash('error') });
 });
-router.get('/profile', isLoggedInd, async function (req, res, next) {
+router.get('/profile', isLoggedIn, async function (req, res, next) {
   const user = await userModel.findOne({
     username: req.session.passport.user
-  })
+  }).populate("posts")
   res.render("profile", { user })
 });
 router.post('/register', function (req, res, next) {
@@ -60,7 +70,7 @@ router.get('/logout', function (req, res, next) {
 
 })
 
-function isLoggedInd(req, res, next) {
+function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect('/login');
 }

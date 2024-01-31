@@ -12,6 +12,12 @@ body {
   border-radius: 10px;
   background: #c74b51;
 }
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: start;
+}
 
 .cardpers {
   background-color: #fff;
